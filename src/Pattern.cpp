@@ -51,6 +51,8 @@ void Pattern::doPlay(){
 
     double r, g, b;
 
+    int32_t prevColor;
+
     r = std::stoi(output.substr(19, 4), nullptr, 16);
     g = std::stoi(output.substr(24, 4), nullptr, 16);
     b = std::stoi(output.substr(29, 4), nullptr, 16);
@@ -87,8 +89,11 @@ void Pattern::doPlay(){
                         (int)g * 0x000100 +
                         (int)b * 0x000001; //Redundant, I know, but it looks nice
 
-        std::cout << std::hex << std::setw(6) << color << std::endl;
-        execute(Logger::makeString("blink1-tool -m 0 --rgb=",r,",",g,",",b));
+        if (color != prevColor){
+            std::cout << std::hex << std::setw(6) << color << std::endl;
+            execute(Logger::makeString("blink1-tool -m 0 --rgb=",r,",",g,",",b));
+            prevColor = color;
+        }
 
         if (getTime() >= endTime){
             index++;
