@@ -8,10 +8,13 @@ Logger patternLogger;
 
 Pattern::Pattern() {
     PatternPart defaultPart(0x00, 0x00, 0x00, 300); //By default, turn off in 300 ms
+    parts.push_back(defaultPart);
+    name = "Off";
 }
 
-Pattern::Pattern(std::vector<PatternPart>& _parts) {
+Pattern::Pattern(std::vector<PatternPart>& _parts, std::string _name) {
     parts = _parts;
+    name  = _name;
 }
 
 void Pattern::play() {
@@ -25,9 +28,7 @@ void Pattern::play() {
 
 void Pattern::stop(){
     m.lock();
-    {
         playing = false;
-    }
     m.unlock();
 }
 
@@ -46,13 +47,13 @@ void Pattern::doPlay(){
            greenStep,
            blueStep;
 
-    std::string output = exec("blink1-tool --rgbread");
+    std::string output = executeGetOutput("blink1-tool --rgbread");
 
     double r, g, b;
 
     r = std::stoi(output.substr(19, 4), nullptr, 16);
     g = std::stoi(output.substr(24, 4), nullptr, 16);
-    b = std::stoi(output.substr(31, 2), nullptr, 16);
+    b = std::stoi(output.substr(29, 4), nullptr, 16);
 
     m.lock();
         long endTime = getTime() + parts[index + 1].time;
@@ -87,7 +88,7 @@ void Pattern::doPlay(){
                         (int)b * 0x000001; //Redundant, I know, but it looks nice
 
         std::cout << std::hex << std::setw(6) << color << std::endl;
-        exec((char *)Logger::makeString("blink1-tool -m 0 --rgb=",r,",",g,",",b).c_str());
+        execute(Logger::makeString("blink1-tool -m 0 --rgb=",r,",",g,",",b));
 
         if (getTime() >= endTime){
             index++;
@@ -126,16 +127,6 @@ long Pattern::getTime(){
     return millis.count();
 }
 
-std::string exec(char* cmd) {
-    FILE* pipe = popen(cmd, "r");
-    if (!pipe) return "ERROR";
-    char buffer[128];
-    std::string result = "";
-    while(!feof(pipe)) {
-    if(fgets(buffer, 128, pipe) != NULL)
-        result += buffer;
-    }
-    pclose(pipe);
-    return result;
+std::string Pattern::getName(){
+    return name;
 }
-

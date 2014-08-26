@@ -10,6 +10,7 @@ class Pattern {
 
     bool        playing = false;
     std::mutex  m;
+    std::string name;
 
     void doPlay();
     long getTime();
@@ -19,14 +20,14 @@ class Pattern {
         std::vector<PatternPart> parts;
 
         Pattern();
-        Pattern(std::vector<PatternPart>& _parts);
+        Pattern(std::vector<PatternPart>& _parts, std::string _name);
 
         void play();
         void stop();
         bool isPlaying();
 
-};
+        std::string getName();
 
-std::string exec(char* cmd);
+};
 
 #endif

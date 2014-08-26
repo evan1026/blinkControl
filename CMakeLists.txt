@@ -12,7 +12,8 @@ set(EXECUTABLE_NAME "blinkControl")
 
 add_executable(${EXECUTABLE_NAME}
                ${SOURCE_DIR}/main.cpp
-               ${SOURCE_DIR}/Pattern.cpp)
+               ${SOURCE_DIR}/Pattern.cpp
+               ${SOURCE_DIR}/FileReader.cpp)
 
 find_package(Logger REQUIRED)
 target_link_libraries(${EXECUTABLE_NAME} Logger)
