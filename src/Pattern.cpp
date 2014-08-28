@@ -20,6 +20,7 @@ Pattern::Pattern(std::vector<PatternPart>& _parts, std::string _name) {
 void Pattern::play() {
     if (!playing){
         playing = true;
+        playingThread = std::thread(&Pattern::doPlay, this);
         playingThread.detach();
     } else {
         patternLogger.log(Logger::LogType::Error, "Pattern already running!");
@@ -47,7 +48,7 @@ void Pattern::doPlay(){
            greenStep,
            blueStep;
 
-    std::string output = executeGetOutput("blink1-tool --rgbread");
+    std::string output = MiscUtils::executeGetOutput("blink1-tool --rgbread");
 
     double r, g, b;
 
@@ -90,8 +91,8 @@ void Pattern::doPlay(){
                         (int)b * 0x000001; //Redundant, I know, but it looks nice
 
         if (color != prevColor){
-            std::cout << std::hex << std::setw(6) << color << std::endl;
-            execute(Logger::makeString("blink1-tool -m 0 --rgb=",r,",",g,",",b));
+            if (debug) std::cout << std::hex << std::setfill('0') << std::setw(6) << color << std::endl;
+            MiscUtils::execute(Logger::makeString("blink1-tool -m 0 --rgb=",r,",",g,",",b));
             prevColor = color;
         }
 
@@ -123,6 +124,10 @@ void Pattern::doPlay(){
 
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
+
+    m.lock();
+        playing = false;
+    m.unlock();
 }
 
 long Pattern::getTime(){

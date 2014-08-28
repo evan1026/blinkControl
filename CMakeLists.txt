@@ -13,7 +13,16 @@ set(EXECUTABLE_NAME "blinkControl")
 add_executable(${EXECUTABLE_NAME}
                ${SOURCE_DIR}/main.cpp
                ${SOURCE_DIR}/Pattern.cpp
-               ${SOURCE_DIR}/FileReader.cpp)
+               ${SOURCE_DIR}/FileReader.cpp
+               ${SOURCE_DIR}/GTK.cpp
+               ${SOURCE_DIR}/TrayIcon.cpp)
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(GTKMM gtkmm-3.0)
+
+link_directories(${GTKMM_LIBRARY_DIRS})
+include_directories(${GTKMM_INCLUDE_DIRS})
+target_link_libraries(${EXECUTABLE_NAME} ${GTKMM_LIBRARIES})
 
 find_package(Logger REQUIRED)
 target_link_libraries(${EXECUTABLE_NAME} Logger)

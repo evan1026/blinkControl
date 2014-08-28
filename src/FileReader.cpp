@@ -15,12 +15,12 @@ std::vector<Pattern *> FileReader::getPatterns(){
 std::vector<Pattern *> FileReader::getPatterns(std::string path){
     std::vector<Pattern *> output;
 
-    path = executeGetOutput(Logger::makeString("echo ", path)); //Expands path with bash variables in it
-    replaceAll(path, "\n", "");
+    path = MiscUtils::executeGetOutput(Logger::makeString("echo ", path)); //Expands path with bash variables in it
+    MiscUtils::replaceAll(path, "\n", "");
 
     std::vector<std::string> fileNames;
 
-    std::string files = executeGetOutput(Logger::makeString("ls -1 ", path, " 2>/dev/null"));
+    std::string files = MiscUtils::executeGetOutput(Logger::makeString("ls -1 ", path, " 2>/dev/null"));
     if (files == ""){
         fileLogger.log(Logger::LogType::Error, "Pattern directory empty or does not exist. This program is useless without patterns, so go fix it.");
         exit(1);
@@ -42,7 +42,7 @@ std::vector<Pattern *> FileReader::getPatterns(std::string path){
             int lineNum = 0;
             while (std::getline(instream, line)){
                 lineNum++;
-                replaceAll(line, " ", "");                     //Remove spaces
+                MiscUtils::replaceAll(line, " ", "");                     //Remove spaces
                 if (line[0] == '#' || line.empty()) continue;  //Ignore comments and empty lines
 
                 std::stringstream lineReader(line);
@@ -130,11 +130,3 @@ std::vector<Pattern *> FileReader::getPatterns(std::string path){
 
     return output;
 }
-
-void FileReader::replaceAll(std::string& str, const std::string& from, const std::string& to) {
-    size_t start_pos = 0;
-    while((start_pos = str.find(from, start_pos)) != std::string::npos) {
-        str.replace(start_pos, from.length(), to);
-        start_pos += to.length();
-    }
-    }

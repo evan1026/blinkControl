@@ -1,29 +1,21 @@
 #include <Logger/Logger.hpp>
 #include <MiscUtils/MiscUtils.hpp>
 #include <vector>
+#include <gtkmm.h>
 #include "PatternPart.hpp"
 #include "Pattern.hpp"
 #include "FileReader.hpp"
+#include "TrayIcon.hpp"
+#include "GTK.hpp"
 #include "main.hpp"
 
 Logger mainLogger;
 
 int main(int argc, char* argv[]){
-   // std::vector<PatternPart> parts;
+    if (MiscUtils::replaceAllGiveString(MiscUtils::executeGetOutput("blink1-tool --rgbread"), "\n", "") == "no blink(1) devices found") {
+        mainLogger.log(Logger::LogType::Error, "No blink(1) device found.");
+        exit(3);
+    }
 
-    /*parts.push_back(PatternPart(0x00, 0x00, 0x00, 300));
-    parts.push_back(PatternPart(0xff, 0xff, 0xff, 5000));
-    parts.push_back(PatternPart(0x00, 0xff, 0x00, 30000));
-    parts.push_back(PatternPart(0xff, 0x00, 0x00, 30000));
-    parts.push_back(PatternPart(0x00, 0x00, 0x00, 3000));
-
-    Pattern pattern(parts);
-    pattern.play();
-    std::this_thread::sleep_for(std::chrono::milliseconds(100000));*/
-
-    std::vector<Pattern *> patterns = FileReader::getPatterns();
-
-    mainLogger.log("Playing \"", patterns[0]->getName(), "\"");
-    patterns[0]->play();
-    std::this_thread::sleep_for(std::chrono::milliseconds(100000));
+    return GTK::startGTK(argc, argv);
 }

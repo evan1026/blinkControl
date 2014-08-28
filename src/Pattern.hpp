@@ -9,12 +9,13 @@
 class Pattern {
 
     bool        playing = false;
+    bool        debug   = false;
     std::mutex  m;
     std::string name;
 
     void doPlay();
     long getTime();
-    std::thread playingThread = std::thread(&Pattern::doPlay, this);
+    std::thread playingThread;
 
     public:
         std::vector<PatternPart> parts;
