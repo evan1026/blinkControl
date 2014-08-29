@@ -42,16 +42,17 @@ std::vector<Pattern *> FileReader::getPatterns(std::string path){
             int lineNum = 0;
             while (std::getline(instream, line)){
                 lineNum++;
-                MiscUtils::replaceAll(line, " ", "");                     //Remove spaces
+                MiscUtils::replaceAll(line, " ", "");          //Remove spaces
                 if (line[0] == '#' || line.empty()) continue;  //Ignore comments and empty lines
 
                 std::stringstream lineReader(line);
                 std::string redString,
                             greenString,
                             blueString,
-                            timeString;
+                            timeString,
+                            ledString;
 
-                if (std::count(line.begin(), line.end(), ',') != 3){
+                if (std::count(line.begin(), line.end(), ',') != 4){
                     fileLogger.log(Logger::LogType::Error, "Line ", lineNum, " in \"", file, "\" is malformed. Exiting...");
                     exit(2);
                 }
@@ -60,9 +61,17 @@ std::vector<Pattern *> FileReader::getPatterns(std::string path){
                 std::getline(lineReader, greenString, ',');
                 std::getline(lineReader, blueString, ',');
                 std::getline(lineReader, timeString, ',');
+                std::getline(lineReader, ledString, ',');
 
                 short r, g, b;
+                short led;
                 int   time;
+
+                led = std::stoi(ledString);
+                if (!(led == 0 || led == 1 || led == 2)){
+                    fileLogger.log(Logger::LogType::Error, "Line ", lineNum, " in \"", file, "\" is malformed. Exiting...");
+                    exit(2);
+                }
 
                 if (redString[0] == '0'){ //Reading in binary, octal, or hex (if it's just 0, it doesn't really matter)
                     if (redString.size() < 2) { //Must just be the zero
@@ -116,8 +125,7 @@ std::vector<Pattern *> FileReader::getPatterns(std::string path){
                 }
 
                 time = std::stoi(timeString);
-
-                currParts.push_back(PatternPart(r, g, b, time));
+                currParts.push_back(PatternPart(r, g, b, time, led));
             }
 
             Pattern * curr = new Pattern(currParts, file);
