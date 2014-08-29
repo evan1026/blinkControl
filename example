@@ -1,0 +1,30 @@
+#Example pattern file showing syntax
+#Copy to $HOME/.blink/patterns/ to see it in action
+
+#Supports comments (but only on their own line for now)
+
+#Format:
+#r,g,b,time,led (spaces are allowed, but no tabs)
+
+#For the led parameter, it follows from blink(1)-tool:
+#   led = 0 ---> both leds
+#   led = 1 ---> led 1 (the side that says "blink(1)")
+#   led = 2 ---> led 2 (the side with the ThingM logo)
+
+#Put each color + time combination on its own line
+0xff,0xff,0xff,300,0
+
+#You can use hex
+0xff,0x00,0x00,300,2
+
+#You can use binary
+0b0,0b11111111,0b0,300,1
+
+#You can use decimal
+0,0,255,300,2
+
+#You can even combine
+255,0xff,0b11111111,300,0
+
+#Time can be whatever you what (I'm keeping it kinda low because waiting sucks)
+0,0,0,5000,0
