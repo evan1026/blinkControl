@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 2.8)
 
 project(blinkControl)
 
-set(CMAKE_CXX_FLAGS "-std=c++11 -pthread -Wall ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "-std=c++11 -pthread -Wall -DUSE_HIDAPI ${CMAKE_CXX_FLAGS}")
+set(CMAKE_C_FLAGS "-DUSE_HIDAPI ${CMAKE_C_FLAGS}")
 
 set(SOURCE_DIR "src")
 
@@ -29,3 +30,6 @@ target_link_libraries(${EXECUTABLE_NAME} Logger)
 
 find_package(MiscUtils REQUIRED)
 target_link_libraries(${EXECUTABLE_NAME} MiscUtils)
+
+link_directories(${CMAKE_CURRENT_SOURCE_DIR}/${SOURCE_DIR}/blink1-lib/)
+target_link_libraries(${EXECUTABLE_NAME} :blink1-lib.so)

@@ -27,8 +27,8 @@ void GTK::backgroundThread(){
 
     int patternIndex = 0;
 
-    patterns[patternIndex]->play();
     GTKLogger.log("Playing \"", patterns[patternIndex]->getName(), "\"");
+    patterns[patternIndex]->play();
 
     while(true){
         if (!patterns[patternIndex]->isPlaying()){

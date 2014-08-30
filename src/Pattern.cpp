@@ -2,6 +2,7 @@
 #include <MiscUtils/MiscUtils.hpp>
 #include <chrono>
 #include <iomanip>
+#include "blink1-lib/blink1-lib.h"
 #include "Pattern.hpp"
 
 Logger patternLogger;
@@ -41,6 +42,14 @@ bool Pattern::isPlaying(){
 }
 
 void Pattern::doPlay(){
+
+    blink1_device * blink = blink1_open();
+
+    if (blink == NULL) {
+        patternLogger.log(Logger::LogType::Error, "Why u no leave blink(1) plugged in?");
+        exit(4);
+    }
+
     bool isPlaying = true;
     int  index = -1; //Getting time from the next value, so starting here will get the time of index 0 first
 
@@ -48,21 +57,25 @@ void Pattern::doPlay(){
            green1Step, green2Step,
            blue1Step,  blue2Step;
 
-    std::string output1 = MiscUtils::executeGetOutput("blink1-tool --rgbread --led 1");
-    std::string output2 = MiscUtils::executeGetOutput("blink1-tool --rgbread --led 2");
-
     double r1, r2, g1, g2, b1, b2;
     short  led;
     int32_t prevColor1,
             prevColor2;
 
-    r1 = std::stoi(output1.substr(19, 4), nullptr, 16);
-    g1 = std::stoi(output1.substr(24, 4), nullptr, 16);
-    b1 = std::stoi(output1.substr(29, 4), nullptr, 16);
+    uint8_t  readRed                = 0;
+    uint8_t  readGreen              = 0;
+    uint8_t  readBlue               = 0;
+    uint16_t INeedThisToPreventSegV = 0; //The function needs a place to store the time the device was last sent
 
-    r2 = std::stoi(output2.substr(19, 4), nullptr, 16);
-    g2 = std::stoi(output2.substr(24, 4), nullptr, 16);
-    b2 = std::stoi(output2.substr(29, 4), nullptr, 16);
+    blink1_readRGB(blink, &INeedThisToPreventSegV, &readRed, &readGreen, &readBlue, 1);
+    r1 = readRed;
+    g1 = readGreen;
+    b1 = readBlue;
+
+    blink1_readRGB(blink, &INeedThisToPreventSegV, &readRed, &readGreen, &readBlue, 2);
+    r2 = readRed;
+    g2 = readGreen;
+    b2 = readBlue;
 
     prevColor1 = (int)r1 * 0x010000 +
                  (int)g1 * 0x000100 +
@@ -149,17 +162,16 @@ void Pattern::doPlay(){
                          (int)b2 * 0x000001; //Redundant, I know, but it looks nice
 
 
-        //patternLogger.log(led);
-
         if (color1 != prevColor1){
             if (debug)  std::cout << led << " " << std::hex << std::setfill('0') << std::setw(6) << color1 << std::endl;
-            if (!debug) MiscUtils::execute(Logger::makeString("blink1-tool -m 0 --led 1 --rgb=",r1,",",g1,",",b1));
+            if (!debug) blink1_fadeToRGBN(blink, 0, (uint8_t)r1, (uint8_t)g1, (uint8_t)b1, 1); //Had to use fade because set doesn't all for individual control
             prevColor1 = color1;
         }
 
         if (color2 != prevColor2){
             if (debug)  std::cout << led << " " << std::hex << std::setfill('0') << std::setw(6) << color2 << std::endl;
-            if (!debug) MiscUtils::execute(Logger::makeString("blink1-tool -m 0 --led 2 --rgb=",r2,",",g2,",",b2));
+            if (!debug) blink1_fadeToRGBN(blink, 0, (uint8_t)r2, (uint8_t)g2, (uint8_t)b2, 2); //Had to use fade because set doesn't all for individual control
+
             prevColor2 = color2;
         }
 
@@ -216,6 +228,8 @@ void Pattern::doPlay(){
     m.lock();
         playing = false;
     m.unlock();
+
+    blink1_close(blink);
 }
 
 long Pattern::getTime(){
