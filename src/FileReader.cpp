@@ -4,19 +4,20 @@
 #include <sstream>
 #include <fstream>
 #include <algorithm>
+#include <iomanip>
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
 #include "FileReader.hpp"
 
 Logger fileLogger;
 
 std::vector<Pattern *> FileReader::getPatterns(){
-    return FileReader::getPatterns("$HOME/.blink/patterns/"); //Will be using bash on linux, so might as well set the default to this
+    return FileReader::getPatterns(MiscUtils::getLinuxHomeFolder() + ".blink/patterns/"); //Will be using bash on linux, so might as well set the default to this
 }
 
 std::vector<Pattern *> FileReader::getPatterns(std::string path){
     std::vector<Pattern *> output;
-
-    path = MiscUtils::executeGetOutput(Logger::makeString("echo ", path)); //Expands path with bash variables in it
-    MiscUtils::replaceAll(path, "\n", "");
 
     std::vector<std::string> fileNames;
 
@@ -137,4 +138,59 @@ std::vector<Pattern *> FileReader::getPatterns(std::string path){
     }
 
     return output;
+}
+
+std::string FileReader::getBlinkID(std::string serial) {
+    return FileReader::getBlinkID(serial, MiscUtils::getLinuxHomeFolder() + ".blink/ids/");
+}
+
+std::string FileReader::getBlinkID(std::string serial, std::string path) {
+    std::string blinkID;
+
+    std::ifstream idFile(path + serial);
+    if (idFile.is_open()) {
+        getline(idFile, blinkID);
+        idFile.close();
+    } else {
+        blinkID = generateBlinkID(serial);
+        saveBlinkID(serial, blinkID);
+    }
+
+    return blinkID;
+}
+
+std::string FileReader::generateBlinkID(std::string serial) {
+    uint32_t randomBits;
+
+    //Generates a 32-bit random number, or 8 hex chars
+    srand (time(NULL));
+    randomBits  = rand() & 0xff;
+    randomBits |= (rand() & 0xff) << 8;
+    randomBits |= (rand() & 0xff) << 16;
+    randomBits |= (rand() & 0xff) << 24;
+
+    std::stringstream ss;
+    ss << std::hex << std::setw(8) << randomBits;
+
+    return ss.str() + serial;
+}
+
+void FileReader::saveBlinkID(std::string serial, std::string id) {
+    saveBlinkID(serial, id, MiscUtils::getLinuxHomeFolder() + ".blink/ids/");
+}
+
+void FileReader::saveBlinkID(std::string serial, std::string id, std::string path){
+    if (!MiscUtils::dirExists(path)){
+        MiscUtils::execute("mkdir -p " + path);
+    }
+
+    std::ofstream file(path + serial, std::ios::out | std::ios::trunc);
+
+    if (file.is_open()){
+        file << id;
+        file.close();
+    } else {
+        fileLogger.log(Logger::LogType::Error, "Could not open file \"", path + serial, "\" for writing. Please check you permission to write to this location.");
+        exit(5);
+    }
 }

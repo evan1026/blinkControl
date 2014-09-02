@@ -4,6 +4,7 @@
 #include <vector>
 #include <mutex>
 #include <thread>
+#include "blink1-lib/blink1-lib.h"
 #include "PatternPart.hpp"
 
 class Pattern {
@@ -13,7 +14,7 @@ class Pattern {
     std::mutex  m;
     std::string name;
 
-    void doPlay();
+    void doPlay(blink1_device * blink);
     long getTime();
     std::thread playingThread;
 
@@ -23,7 +24,7 @@ class Pattern {
         Pattern();
         Pattern(std::vector<PatternPart>& _parts, std::string _name);
 
-        void play();
+        void play(blink1_device * blink);
         void stop();
         bool isPlaying();
 

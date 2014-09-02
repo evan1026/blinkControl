@@ -21,8 +21,5 @@ int main(int argc, char* argv[]){
         exit(3);
     }
 
-    //I need to detect if it's plugged in immediately, but if it is, another thread needs to open it, so I'll close it here
-    blink1_close(blink);
-
-    return GTK::startGTK(argc, argv);
+    return GTK::startGTK(argc, argv, blink, FileReader::getBlinkID(blink1_getSerialForDev(blink)));
 }

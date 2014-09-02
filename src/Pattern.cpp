@@ -18,10 +18,10 @@ Pattern::Pattern(std::vector<PatternPart>& _parts, std::string _name) {
     name  = _name;
 }
 
-void Pattern::play() {
+void Pattern::play(blink1_device * blink) {
     if (!playing){
         playing = true;
-        playingThread = std::thread(&Pattern::doPlay, this);
+        playingThread = std::thread(&Pattern::doPlay, this, blink);
         playingThread.detach();
     } else {
         patternLogger.log(Logger::LogType::Error, "Pattern already running!");
@@ -41,9 +41,7 @@ bool Pattern::isPlaying(){
     return isPlaying;
 }
 
-void Pattern::doPlay(){
-
-    blink1_device * blink = blink1_open();
+void Pattern::doPlay(blink1_device * blink){
 
     if (blink == NULL) {
         patternLogger.log(Logger::LogType::Error, "Why u no leave blink(1) plugged in?");
@@ -228,8 +226,6 @@ void Pattern::doPlay(){
     m.lock();
         playing = false;
     m.unlock();
-
-    blink1_close(blink);
 }
 
 long Pattern::getTime(){

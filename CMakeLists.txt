@@ -16,14 +16,20 @@ add_executable(${EXECUTABLE_NAME}
                ${SOURCE_DIR}/Pattern.cpp
                ${SOURCE_DIR}/FileReader.cpp
                ${SOURCE_DIR}/GTK.cpp
-               ${SOURCE_DIR}/TrayIcon.cpp)
+               ${SOURCE_DIR}/TrayIcon.cpp
+               ${SOURCE_DIR}/IFTTT.cpp)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTKMM gtkmm-3.0)
+pkg_check_modules(CURL libcurl)
 
 link_directories(${GTKMM_LIBRARY_DIRS})
 include_directories(${GTKMM_INCLUDE_DIRS})
 target_link_libraries(${EXECUTABLE_NAME} ${GTKMM_LIBRARIES})
+
+link_directories(${CURL_LIBRARY_DIRS})
+include_directories(${CURL_INCLUDE_DIRS})
+target_link_libraries(${EXECUTABLE_NAME} ${CURL_LIBRARIES})
 
 find_package(Logger REQUIRED)
 target_link_libraries(${EXECUTABLE_NAME} Logger)

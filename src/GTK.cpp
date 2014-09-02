@@ -2,21 +2,34 @@
 #include <MiscUtils/MiscUtils.hpp>
 #include <Logger/Logger.hpp>
 #include <gtkmm.h>
+#include <time.h>
+#include "blink1-lib/blink1-lib.h"
 #include "TrayIcon.hpp"
 #include "FileReader.hpp"
+#include "IFTTT.hpp"
+#include "Event.hpp"
 #include "GTK.hpp"
 
 Glib::RefPtr<Gtk::Application> app;
 
 Logger GTKLogger;
 
-int GTK::startGTK(int argc, char* argv[]){
+blink1_device * blink;
+
+std::string blinkID;
+
+time_t prevTime = time(NULL);
+
+int GTK::startGTK(int argc, char* argv[], blink1_device * _blink, std::string _blinkID){
     app = Gtk::Application::create(argc, argv, "org.evan1026.blink_control");
 
     TrayIcon tray;
 
     Glib::Threads::Thread* iconThread = Glib::Threads::Thread::create(sigc::ptr_fun(backgroundThread));
     MarkUnused(iconThread);
+
+    blink   = _blink;
+    blinkID = _blinkID;
 
     app->hold();
     return app->run();
@@ -25,20 +38,30 @@ int GTK::startGTK(int argc, char* argv[]){
 void GTK::backgroundThread(){
     std::vector<Pattern *> patterns = FileReader::getPatterns();
 
-    int patternIndex = 0;
-
-    GTKLogger.log("Playing \"", patterns[patternIndex]->getName(), "\"");
-    patterns[patternIndex]->play();
+    int patternIndex = -1;
 
     while(true){
-        if (!patterns[patternIndex]->isPlaying()){
+        if (patternIndex != -1 && !patterns[patternIndex]->isPlaying()){
             GTKLogger.log("Finished");
-            patternIndex++;
-            if (patternIndex == patterns.size()) patternIndex = 0;
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-            patterns[patternIndex]->play();
-            GTKLogger.log("Playing \"", patterns[patternIndex]->getName(), "\"");
+            patternIndex = -1;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::string eventJSON = IFTTT::getEvents(blinkID);
+        std::vector<Event> events = IFTTT::processEvents(eventJSON);
+
+        for (Event s : events){
+            if (s.date > prevTime){
+                GTKLogger.log("BlinkID(", s.blink_id, ") Date(", s.date, ") Name(", s.name, ") Source(", s.source, ")");
+                prevTime = s.date;
+                for (int i = 0; i < patterns.size(); ++i){
+                    if (patterns[i]->getName() == s.name){
+                        patterns[i]->play(blink);
+                        patternIndex = i;
+                        break;
+                    }
+                }
+            }
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 }
