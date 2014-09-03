@@ -190,7 +190,28 @@ void FileReader::saveBlinkID(std::string serial, std::string id, std::string pat
         file << id;
         file.close();
     } else {
-        fileLogger.log(Logger::LogType::Error, "Could not open file \"", path + serial, "\" for writing. Please check you permission to write to this location.");
+        fileLogger.log(Logger::LogType::Error, "Could not open file \"", path + serial, "\" for writing. Please check your permission to write to this location.");
         exit(5);
     }
+}
+
+void FileReader::savePattern(Pattern & pattern) {
+    savePattern(pattern, MiscUtils::getLinuxHomeFolder() + ".blink/patterns/");
+}
+
+void FileReader::savePattern(Pattern & pattern, std::string path) {
+    std::ofstream file(path + pattern.getName(), std::ios::out | std::ios::trunc);
+
+    if (!file.is_open()){
+        fileLogger.log(Logger::LogType::Error, "Could not open file \"", path + pattern.getName(), "\" for writing. Please check your permission to write to this location.");
+        exit(5);
+    }
+
+    file << "#This pattern file was automatically generated." << std::endl;
+
+    for (int i = 0; i < pattern.parts.size(); ++i) {
+        file << pattern.parts[i].r << "," << pattern.parts[i].g << "," << pattern.parts[i].b << "," << pattern.parts[i].time << "," << pattern.parts[i].led << std::endl;
+    }
+
+    file.close();
 }

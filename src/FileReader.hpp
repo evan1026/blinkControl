@@ -9,6 +9,9 @@ namespace FileReader {
     std::vector<Pattern *> getPatterns();
     std::vector<Pattern *> getPatterns(std::string path); //Path to folder holding files
 
+    void savePattern(Pattern & pattern);
+    void savePattern(Pattern & pattern, std::string path);
+
     std::string getBlinkID(std::string serial);
     std::string getBlinkID(std::string serial, std::string path);
 
