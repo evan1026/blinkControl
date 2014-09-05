@@ -7,6 +7,7 @@
 namespace GTK {
     void backgroundThread();
     int  startGTK(int argc, char* argv[], blink1_device * _blink, std::string _blinkID);
+    void addPart();
 }
 
 #endif
