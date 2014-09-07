@@ -14,6 +14,7 @@
 
 Glib::RefPtr<Gtk::Application> app;
 Glib::RefPtr<Gtk::Fixed>       holder;
+Glib::RefPtr<Gtk::Entry>       nameEntry;
 
 Gtk::Button * addButton;
 
@@ -24,6 +25,10 @@ blink1_device * blink;
 std::string blinkID;
 
 time_t prevTime = time(NULL);
+
+std::mutex lock;
+
+std::vector<Pattern *> patterns = FileReader::getPatterns();
 
 int GTK::startGTK(int argc, char* argv[], blink1_device * _blink, std::string _blinkID){
     app = Gtk::Application::create(argc, argv, "org.evan1026.blink_control");
@@ -43,6 +48,10 @@ int GTK::startGTK(int argc, char* argv[], blink1_device * _blink, std::string _b
 
     holder = Glib::RefPtr<Gtk::Fixed>::cast_dynamic(builder->get_object("PatternPartHolder"));
 
+    nameEntry = Glib::RefPtr<Gtk::Entry>::cast_dynamic(builder->get_object("NameEntry"));
+
+    Glib::RefPtr<Gtk::Button>::cast_dynamic(builder->get_object("SubmitButton"))->signal_clicked().connect(sigc::ptr_fun(addPattern));
+
     addButton = new Gtk::Button("Add part");
     addButton->signal_clicked().connect(sigc::ptr_fun(addPart));
     addButton->show();
@@ -55,15 +64,16 @@ int GTK::startGTK(int argc, char* argv[], blink1_device * _blink, std::string _b
 }
 
 void GTK::backgroundThread(){
-    std::vector<Pattern *> patterns = FileReader::getPatterns();
-
     int patternIndex = -1;
 
     while(true){
-        if (patternIndex != -1 && !patterns[patternIndex]->isPlaying()){
-            GTKLogger.log("Finished");
-            patternIndex = -1;
-        }
+        lock.lock();
+            if (patternIndex != -1 && !patterns[patternIndex]->isPlaying()){
+                GTKLogger.log("Finished");
+                patternIndex = -1;
+            }
+        lock.unlock();
+
         std::string eventJSON = IFTTT::getEvents(blinkID);
         std::vector<Event> events = IFTTT::processEvents(eventJSON);
 
@@ -71,13 +81,15 @@ void GTK::backgroundThread(){
             if (s.date > prevTime){
                 GTKLogger.log("BlinkID(", s.blink_id, ") Date(", s.date, ") Name(", s.name, ") Source(", s.source, ")");
                 prevTime = s.date;
-                for (int i = 0; i < patterns.size(); ++i){
-                    if (patterns[i]->getName() == s.name){
-                        patterns[i]->play(blink);
-                        patternIndex = i;
-                        break;
+                lock.lock();
+                    for (int i = 0; i < patterns.size(); ++i){
+                        if (patterns[i]->getName() == s.name){
+                            patterns[i]->play(blink);
+                            patternIndex = i;
+                            break;
+                        }
                     }
-                }
+                lock.unlock();
             }
         }
 
@@ -90,11 +102,11 @@ void GTK::addPart(){
 
     int highest = 0;
     for (Gtk::Widget * child : children) {
-        Gtk::ColorButton * testColorButton = dynamic_cast<Gtk::ColorButton*>(child);
-        if (testColorButton){
+        Gtk::Fixed * testrow = dynamic_cast<Gtk::Fixed*>(child);
+        if (testrow){
             int num;
-            std::string name = testColorButton->get_name();
-            name.replace(0,12,""); //Turns "ColorButton n" into "n"
+            std::string name = testrow->get_name();
+            name.replace(0,4,""); //Turns "Row n" into "n"
 
             std::stringstream ss(name);
             ss >> num;
@@ -107,29 +119,32 @@ void GTK::addPart(){
     std::stringstream ss;
     ss << current;
 
+    Gtk::Fixed* newRowHolder = new Gtk::Fixed();
+    newRowHolder->set_size_request(-1, PATTERN_MAKER_ROW_HEIGHT);
+    newRowHolder->set_name("Row " + ss.str());
+    newRowHolder->show();
+
     Gtk::Image* deleteImage = new Gtk::Image(Gtk::Stock::STOP, Gtk::BuiltinIconSize::ICON_SIZE_SMALL_TOOLBAR);
 
     Gtk::Button* newDeleteButton = new Gtk::Button();
-    newDeleteButton->set_name("Delete Button " + ss.str());
+    newDeleteButton->set_name("Delete");
     newDeleteButton->set_size_request(30, PATTERN_MAKER_ROW_HEIGHT);
     newDeleteButton->set_image(*deleteImage);
     newDeleteButton->show();
+    newDeleteButton->signal_clicked().connect(sigc::bind(sigc::ptr_fun<int>(deleteRow), current));
 
     Gtk::Label* newColorLabel = new Gtk::Label("Color: ");
-    newColorLabel->set_name("Color Label " + ss.str());
     newColorLabel->show();
 
     Gtk::ColorButton* newColorButton = new Gtk::ColorButton();
-    newColorButton->set_name("ColorButton " + ss.str());
     newColorButton->set_size_request(50, PATTERN_MAKER_ROW_HEIGHT);
+    newColorButton->set_use_alpha(false);
     newColorButton->show();
 
     Gtk::Label* newTimeLabel = new Gtk::Label("Time (ms): ");
-    newTimeLabel->set_name("Time Label " + ss.str());
     newTimeLabel->show();
 
     Gtk::SpinButton* newSpinButton = new Gtk::SpinButton(1);
-    newSpinButton->set_name("Spin Button " + ss.str());
     newSpinButton->set_size_request(50, PATTERN_MAKER_ROW_HEIGHT);
     newSpinButton->show();
     newSpinButton->get_adjustment()->set_lower(0);
@@ -137,35 +152,116 @@ void GTK::addPart(){
     newSpinButton->get_adjustment()->set_step_increment(100);
 
     Gtk::Label* newLedLabel = new Gtk::Label("Led: ");
-    newLedLabel->set_name("Led Label " + ss.str());
     newLedLabel->show();
 
     Gtk::RadioButton* newRadioButton1 = new Gtk::RadioButton("1");
-    newRadioButton1->set_name("Radio Button 1 " + ss.str());
     newRadioButton1->set_size_request(30, PATTERN_MAKER_ROW_HEIGHT);
     newRadioButton1->show();
 
     Gtk::RadioButton* newRadioButton2 = new Gtk::RadioButton("2");
-    newRadioButton2->set_name("Radio Button 2 " + ss.str());
     newRadioButton2->set_size_request(30, PATTERN_MAKER_ROW_HEIGHT);
     newRadioButton2->show();
     newRadioButton2->join_group(*newRadioButton1);
 
     Gtk::RadioButton* newRadioButtonBoth = new Gtk::RadioButton("Both");
-    newRadioButtonBoth->set_name("Radio Button both " + ss.str());
     newRadioButtonBoth->set_size_request(40, PATTERN_MAKER_ROW_HEIGHT);
     newRadioButtonBoth->show();
     newRadioButtonBoth->join_group(*newRadioButton1);
 
     holder->move(*addButton, 0, current * PATTERN_MAKER_ROW_HEIGHT);
 
-    holder->put(*newDeleteButton,      0, highest * PATTERN_MAKER_ROW_HEIGHT);
-    holder->put(*newColorLabel,       50, highest * PATTERN_MAKER_ROW_HEIGHT + 6);
-    holder->put(*newColorButton,      90, highest * PATTERN_MAKER_ROW_HEIGHT);
-    holder->put(*newTimeLabel,       160, highest * PATTERN_MAKER_ROW_HEIGHT + 6);
-    holder->put(*newSpinButton,      230, highest * PATTERN_MAKER_ROW_HEIGHT);
-    holder->put(*newLedLabel,        380, highest * PATTERN_MAKER_ROW_HEIGHT + 6);
-    holder->put(*newRadioButton1,    410, highest * PATTERN_MAKER_ROW_HEIGHT);
-    holder->put(*newRadioButton2,    445, highest * PATTERN_MAKER_ROW_HEIGHT);
-    holder->put(*newRadioButtonBoth, 480, highest * PATTERN_MAKER_ROW_HEIGHT);
+    newRowHolder->put(*newDeleteButton,      0, 0);
+    newRowHolder->put(*newColorLabel,       50, 6);
+    newRowHolder->put(*newColorButton,      90, 0);
+    newRowHolder->put(*newTimeLabel,       160, 6);
+    newRowHolder->put(*newSpinButton,      230, 0);
+    newRowHolder->put(*newLedLabel,        380, 6);
+    newRowHolder->put(*newRadioButton1,    410, 0);
+    newRowHolder->put(*newRadioButton2,    445, 0);
+    newRowHolder->put(*newRadioButtonBoth, 480, 0);
+
+    holder->put(*newRowHolder, 0, highest * PATTERN_MAKER_ROW_HEIGHT);
+}
+
+void GTK::deleteRow(int row){
+    std::vector<Gtk::Widget *> children = holder->get_children();
+    int rowNum;
+    for (int i = 0; i < children.size(); ++i) {
+        Gtk::Fixed * testrow = dynamic_cast<Gtk::Fixed*>(children[i]);
+        if (testrow){
+            std::stringstream ss(testrow->get_name().replace(0,4,""));
+            ss >> rowNum;
+            if(rowNum == row){
+                holder->remove(*testrow);
+            } else if (rowNum > row) {
+                holder->move(*testrow, 0, (rowNum - 2) * PATTERN_MAKER_ROW_HEIGHT);
+                testrow->set_name(Logger::makeString("Row ", rowNum - 1));
+                std::vector<Gtk::Widget *> rowChildren = testrow->get_children();
+                for (Gtk::Widget * child : rowChildren){
+                    Gtk::Button * deleteButton = dynamic_cast<Gtk::Button *>(child);
+                    if (deleteButton && deleteButton->get_name() == "Delete"){
+                        deleteButton->signal_clicked().connect(sigc::bind(sigc::ptr_fun<int>(deleteRow), rowNum - 1));
+                    }
+                }
+            }
+        }
+    }
+
+    holder->move(*addButton, 0, (rowNum - 1) * PATTERN_MAKER_ROW_HEIGHT);
+}
+
+void GTK::addPattern(){
+    std::vector<PatternPart> newPattern;
+    std::vector<Gtk::Widget *> children = holder->get_children();
+    for (int i = 0; i < children.size(); ++i){
+        Gtk::Fixed * testrow = dynamic_cast<Gtk::Fixed *>(children[i]);
+        if (testrow) {
+            int r,
+                g,
+                b,
+                time;
+            short led;
+
+            std::vector<Gtk::Widget *> rowChildren = testrow->get_children();
+            for (Gtk::Widget * child : rowChildren) {
+                Gtk::ColorButton * testColorButton = dynamic_cast<Gtk::ColorButton *>(child);
+                Gtk::SpinButton  * testSpinButton  = dynamic_cast<Gtk::SpinButton  *>(child);
+                Gtk::RadioButton * testRadioButton = dynamic_cast<Gtk::RadioButton *>(child);
+
+                if (testColorButton) {
+                    Gdk::Color color = testColorButton->get_color();
+                    r = color.get_red()   & 0xff;
+                    g = color.get_green() & 0xff;
+                    b = color.get_blue()  & 0xff;
+                } else if (testSpinButton) {
+                    time = testSpinButton->get_value_as_int();
+                } else if (testRadioButton && testRadioButton->get_active()){
+                    if (testRadioButton->get_label() == "1"){
+                        led = 1;
+                    } else if (testRadioButton->get_label() == "2"){
+                        led = 2;
+                    } else if (testRadioButton->get_label() == "Both"){
+                        led = 0;
+                    }
+                }
+            }
+//            GTKLogger.log("Row(", testrow->get_name(), ") r(", r, ") g(", g, ") b(", b, ") time(", time, ") led(", led, ")");
+            newPattern.push_back(PatternPart(r,g,b,time,led));
+        }
+    }
+
+    lock.lock();
+        Pattern * patternToAdd = new Pattern(newPattern, nameEntry->get_text());
+        for (int i = 0; i < patterns.size(); ++i){
+            if (patterns[i]->getName() == patternToAdd->getName()){
+                patterns.erase(patterns.begin() + i);
+                break;
+            }
+        }
+        patterns.push_back(patternToAdd);
+        GTKLogger.log("Added ", nameEntry->get_text());
+    lock.unlock();
+
+    FileReader::savePattern(*patternToAdd);
+    GTKLogger.log("Saved ", nameEntry->get_text());
 }
