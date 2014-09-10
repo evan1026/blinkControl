@@ -44,6 +44,7 @@ std::string IFTTT::getEvents(std::string blinkID){
     }
 
     curl_easy_cleanup(curl);
+    return "";
 }
 
 int IFTTT::writer(char *data, size_t size, size_t nmemb, std::string *buffer_in) {

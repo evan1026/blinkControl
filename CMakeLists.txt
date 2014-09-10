@@ -17,7 +17,8 @@ add_executable(${EXECUTABLE_NAME}
                ${SOURCE_DIR}/FileReader.cpp
                ${SOURCE_DIR}/GTK.cpp
                ${SOURCE_DIR}/TrayIcon.cpp
-               ${SOURCE_DIR}/IFTTT.cpp)
+               ${SOURCE_DIR}/IFTTT.cpp
+               ${SOURCE_DIR}/PatternMaker.cpp)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTKMM gtkmm-3.0)
