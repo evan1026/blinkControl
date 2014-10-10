@@ -21,5 +21,7 @@ int main(int argc, char* argv[]){
         exit(3);
     }
 
-    return GTK::startGTK(argc, argv, blink, FileReader::getBlinkID(blink1_getSerialForDev(blink)));
+    GTK program;
+
+    return program.startGTK(argc, argv, blink, FileReader::getBlinkID(blink1_getSerialForDev(blink)));
 }

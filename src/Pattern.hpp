@@ -30,6 +30,8 @@ class Pattern {
 
         std::string getName();
 
+        void setName(std::string _name);
+
 };
 
 #endif

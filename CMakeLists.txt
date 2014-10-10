@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 
 project(blinkControl)
 
-set(CMAKE_CXX_FLAGS "-std=c++11 -pthread -Wall -DUSE_HIDAPI ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "-std=c++11 -pthread -Wall -Wno-overloaded-virtual -Wno-deprecated-register -DUSE_HIDAPI ${CMAKE_CXX_FLAGS}")
 set(CMAKE_C_FLAGS "-DUSE_HIDAPI ${CMAKE_C_FLAGS}")
 
 set(SOURCE_DIR "src")

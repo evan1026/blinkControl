@@ -238,3 +238,7 @@ long Pattern::getTime(){
 std::string Pattern::getName(){
     return name;
 }
+
+void Pattern::setName(std::string _name) {
+    name = _name;
+}

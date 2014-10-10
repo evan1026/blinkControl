@@ -1,0 +1,5 @@
+1. Use erase() to clear a pattern then repopulate when updating
+2. Pick one of 2.1 or 2.2
+    2.1 Rename rows when deleting one
+    2.2 Find better way of keeping track of rows
+3. Deconstruct parts of a row when unneeded
