@@ -1,5 +1,7 @@
-1. Use erase() to clear a pattern then repopulate when updating
-2. Pick one of 2.1 or 2.2
-    2.1 Rename rows when deleting one
-    2.2 Find better way of keeping track of rows
-3. Deconstruct parts of a row when unneeded
+1.  Add "add button" to main window
+2.  Maybe a printout to show what pattern is currently playing
+3.  Code to allow for renaming
+3.1 Change the main window updater to go alphabetically for refreshing when a pattern is renamed
+4.  More clean-up
+5.  Maybe some documenting comments
+6.  Mutex per pattern rather than global mutex, or something like that

@@ -32,6 +32,8 @@ class Pattern {
 
         void setName(std::string _name);
 
+        void clear();
+
 };
 
 #endif

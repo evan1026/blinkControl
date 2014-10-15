@@ -242,3 +242,7 @@ std::string Pattern::getName(){
 void Pattern::setName(std::string _name) {
     name = _name;
 }
+
+void Pattern::clear() {
+    parts.erase(parts.begin(), parts.end());
+}
