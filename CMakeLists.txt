@@ -2,7 +2,16 @@ cmake_minimum_required(VERSION 2.8)
 
 project(blinkControl)
 
-set(CMAKE_CXX_FLAGS "-std=c++11 -pthread -Wall -Wno-overloaded-virtual -Wno-deprecated-register -DUSE_HIDAPI ${CMAKE_CXX_FLAGS}")
+
+if ( NOT ( CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "Release" ) )
+    message(FATAL_ERROR "Build type not specified! Use -DCMAKE_BUILD_TYPE=Debug or -DCMAKE_BUILD_TYPE=Release to fix this.")
+endif()
+
+MESSAGE("${CMAKE_BUILD_TYPE}")
+
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wno-overloaded-virtual -Wno-deprecated-register -fsanitize=address -fno-omit-frame-pointer")
+
+set(CMAKE_CXX_FLAGS "-std=c++11 -pthread -DUSE_HIDAPI -O3 ${CMAKE_CXX_FLAGS}")
 set(CMAKE_C_FLAGS "-DUSE_HIDAPI ${CMAKE_C_FLAGS}")
 
 set(SOURCE_DIR "src")
