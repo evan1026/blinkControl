@@ -9,7 +9,7 @@ endif()
 
 MESSAGE("${CMAKE_BUILD_TYPE}")
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wno-overloaded-virtual -Wno-deprecated-register -fsanitize=address -fno-omit-frame-pointer")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -Wall -Wno-overloaded-virtual -Wno-deprecated-register -fsanitize=address -fno-omit-frame-pointer")
 
 set(CMAKE_CXX_FLAGS "-std=c++11 -pthread -DUSE_HIDAPI -O3 ${CMAKE_CXX_FLAGS}")
 set(CMAKE_C_FLAGS "-DUSE_HIDAPI ${CMAKE_C_FLAGS}")
